@@ -1,18 +1,17 @@
-"""tracking command-line interface."""
+"""sam3 tracking command-line interface."""
 
 import argparse
-import os
 from pathlib import Path
 
+import torch
+
 from psifx.utils.command import Command, register_command
-from psifx.video.tracking.samurai.command import SamuraiCommand
-from psifx.video.tracking.sam3.command import Sam3Command
-from psifx.video.tracking.tool import TrackingTool
+from psifx.video.tracking.sam3.tool import Sam3TrackingTool
 
 
-class TrackingCommand(Command):
+class Sam3Command(Command):
     """
-    Command-line interface for processing videos.
+    Command-line interface for running SAM3.
     """
 
     @staticmethod
@@ -23,10 +22,11 @@ class TrackingCommand(Command):
         :param parser: The argument parser.
         :return:
         """
+        from psifx.video.tracking.command import VisualizationTrackingCommand
+
         subparsers = parser.add_subparsers(title="available commands")
 
-        register_command(subparsers, "samurai", SamuraiCommand)
-        register_command(subparsers, "sam3", Sam3Command)
+        register_command(subparsers, "inference", Sam3InferenceCommand)
         register_command(subparsers, "visualization", VisualizationTrackingCommand)
 
     @staticmethod
@@ -41,9 +41,9 @@ class TrackingCommand(Command):
         parser.print_help()
 
 
-class VisualizationTrackingCommand(Command):
+class Sam3InferenceCommand(Command):
     """
-    Command-line interface for the visualization of tracking.
+    Command-line interface for tracking video elements with SAM3.
     """
 
     @staticmethod
@@ -61,47 +61,34 @@ class VisualizationTrackingCommand(Command):
             required=True,
             help="path to the input video file, such as ``/path/to/video.mp4`` (or .avi, .mkv, etc.)",
         )
-
         parser.add_argument(
-            "--masks",
-            type=Path,
-            nargs='+',
-            required=True,
-            help="list of path to mask directories or individual .mp4 mask files",
-        )
-
-        parser.add_argument(
-            "--visualization",
+            "--mask_dir",
             type=Path,
             required=True,
-            help="path to the output visualization video file, such as ``/path/to/visualization.mp4`` (or .avi, .mkv, etc.)",
+            help="path to the output mask directory, such as ``/path/to/mask_dir``",
         )
-
         parser.add_argument(
-            "--blackout",
-            default=False,
-            action=argparse.BooleanOptionalAction,
-            help="whether to black out the background (non-mask regions)",
+            "--text_prompt",
+            type=str,
+            default="people",
+            help="text description of objects to track (e.g., 'people', 'cars', 'dogs')",
         )
-
         parser.add_argument(
-            "--labels",
-            default=True,
-            action=argparse.BooleanOptionalAction,
-            help="whether to add labels",
+            "--chunk_size",
+            type=int,
+            default=300,
+            help="number of frames to process at once (lower values use less memory)",
         )
-
         parser.add_argument(
-            "--color",
-            default=True,
-            action=argparse.BooleanOptionalAction,
-            help="whether to color the masks",
+            "--iou_threshold",
+            type=float,
+            default=0.3,
+            help="IoU threshold for stitching chunks together (0.0 to 1.0)",
         )
-
         parser.add_argument(
             "--device",
             type=str,
-            default="cpu",
+            default="cuda" if torch.cuda.is_available() else "cpu",
             help="device on which to run the inference, either 'cpu' or 'cuda'",
         )
         parser.add_argument(
@@ -126,25 +113,16 @@ class VisualizationTrackingCommand(Command):
         :param args: The arguments.
         :return:
         """
-        tool = TrackingTool(
+        tool = Sam3TrackingTool(
             device=args.device,
             overwrite=args.overwrite,
             verbose=args.verbose,
         )
-
-        mask_files = []
-        for masks in args.masks:
-            if os.path.isdir(masks):
-                mask_files += [f for f in masks.iterdir()]
-            else:
-                mask_files.append(masks)
-
-        tool.visualize(
+        tool.infer(
             video_path=args.video,
-            mask_paths=mask_files,
-            visualization_path=args.visualization,
-            blackout=args.blackout,
-            color=args.color,
-            labels=args.labels,
+            mask_dir=args.mask_dir,
+            text_prompt=args.text_prompt,
+            chunk_size=args.chunk_size,
+            iou_threshold=args.iou_threshold,
         )
         del tool
