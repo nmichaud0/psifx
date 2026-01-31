@@ -36,40 +36,29 @@ psifx video manipulation process \
 
 ## Tracking
 
-Segment and track humans/objects in a video using **Yolo** and **Samurai**.
+Segment and track humans/objects in a video using **Sam3**
 
-### Tracking with Samurai
+### Tracking with Sam3
 
-Detect the specified humans or objects with **YOLO**, and track them across the video with Samurai (**SAM-2** model).
-To work, it is necessary to have at least an instant in the video where all humans/objects of interest appear
-simultaneously. For detection, this method goes through the whole video to find the instant with the maximum number of
-humans/objects of interest.
-It stops early if all objects are detected, as specified by `max_objects`. The id assignment (1 up to the number of
-detected humans/objects) are arbitrary.
+Detects and tracks humans/objects across the video with **Sam3** model.
+It separates video frames in chunks and segments specified objects through video frames. Intersection over Union (IoU) is computed for each object between each chunk intersection to match detected objects together.
 
 ```bash
-psifx video tracking samurai inference \
+psifx video tracking sam3 inference \
     --video Video.mp4 \
     --mask_dir MaskDir \
-    [--model_size tiny] \
-    [--yolo_model yolo11n.pt] \
-    [--object_class 0] \
-    [--max_objects 100] \
-    [--step 30] \
+    [--text_prompt people] \
+    [--chunk_size 300] \
+    [--iou_threshold 0.3] \
     [--device cuda] \
 ```
 
 * `--video`: Path to the input video file (supports `.mp4`, `.avi`, `.mkv`, etc.).
 * `--mask_dir`: Path to the output mask directory.
-* `--model_size`: Size of the SAM-2 model, either `tiny`, `small`, `base_plus`, or `large` default is `tiny`.
-* `--yolo_model`: Name of the YOLO model to use, from small to big: `yolo11n.pt`, `yolo11s.pt`, `yolo11m.pt`,
-  `yolo11l.pt`, `yolo11x.pt`, default is `yolo11n.pt`.
-* `--object_class`: Class of the object to detect from `0` (_people_) to `79`(_toothbrush_), default is
-  `0`. [Click here for the full list.](https://gist.github.com/rcland12/dc48e1963268ff98c8b2c4543e7a9be8)
-* `--max_objects`: Maximum number of people/objects to detect. If not specified, the method will search for the frame
-  with the most people/objects.
-* `--step`: Step size in frames to perform object detection, default is `30`.
-* `--device`: Device on which to run the inference, either `cpu` or `cuda`, default is `cpu`.
+* `--text_prompt`: Text description of objects to track (e.g `people`, `cars`, `dogs`)
+* `--chunk_size`: Number of frames to process at once (lower values use less memory)
+* `iou_threshold`: IoU threshold for stitching chunks together (from `0.0` to `1.0`)
+* `--device`: Device on which to run the inference, either `cpu` or `cuda`, default is `cuda` if `torch.cuda.is_available()==True`.
 
 ### Tracking Visualization
 

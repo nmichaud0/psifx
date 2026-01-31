@@ -106,7 +106,7 @@ To simplify the workflow only one point of view is provided.
 ### Tracking
 To track and segment the individual, and to produce the associated segmentation mask.
 ```bash
-psifx video tracking samurai inference \
+psifx video tracking sam3 inference \
     --video Video.mp4 \
     --mask_dir masks --overwrite
 ```

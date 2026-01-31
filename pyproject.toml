@@ -10,7 +10,8 @@ requires-python = ">=3.10"
 authors = [
     { name = "Guillaume Rochette", email = "guillaume.rochette@unil.ch" },
     { name = "Matthew Vowels", email = "matthew.vowels@unil.ch" },
-    { name = "Mathieu Rochat", email = "mathieu.louis.rochat@gmail.com" }
+    { name = "Mathieu Rochat", email = "mathieu.louis.rochat@gmail.com" },
+    { name = "Nizar Michaud", email = "waiting_for_institutional_transfer@nothing.com"}
 ]
 keywords = ["video", "audio", "language", "machine-learning", "pipeline", "multimodal"]
 classifiers = [
